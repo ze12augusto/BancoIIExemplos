@@ -1,0 +1,71 @@
+create trigger TG_AtualizarCH on disciplina after insert, delete, update
+
+as
+
+begin
+
+	declare @IdCursoInserted smallint
+	declare @CHInserted decimal (10,2)
+	declare @IdCursoDeleted smallint
+	declare @CHDeleted decimal (10,2)
+	
+	declare @Mensagem varchar (max)
+	
+	begin try
+	
+		select @IdCursoInserted = IdCurso,
+			@CHInserted = CargaHoraria
+			from inserted
+			
+		select @IdCursoDeleted = IdCurso,
+			@CHDeleted = CargaHoraria
+			from deleted
+		
+		--Comando Insert
+		if ( @IdCursoInserted is not null and @IdCursoDeleted is null )
+		
+		begin
+			
+			update curso 
+				set CargaHoraria = 
+					CargaHoraria + @CHInserted
+			where IdCurso = @IdCursoInserted
+		end
+		
+		--Comando Deleted
+		
+		if ( @IdCursoInserted is null )
+		
+		begin
+		
+			update curso
+				set CargaHoraria = 
+					CargaHoraria - @CHDeleted
+			where IdCurso = @IdCursoDeleted
+		
+		end
+		
+		--Comando Update
+		if ( @IdCursoInserted is not null and @IdCursoDeleted is not null )
+		
+		begin
+			
+			update curso
+				set CargaHoraria = 
+					CargaHoraria - @CHDeleted
+					+ @CHInserted
+			where IdCurso = @IdCursoInserted
+			
+		end
+	
+	end try
+	
+	begin catch
+		
+		rollback transaction
+		select @Mensagem = error_message()
+		raiserror (@Mensagem, 16,1)
+		
+	end catch
+	
+end
