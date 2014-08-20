@@ -1,0 +1,26 @@
+declare @IdPessoa int
+declare @Nome varchar (100)
+
+declare navegador cursor
+	for select IdPessoa, Nome from Pessoa
+	
+
+open navegador
+
+fetch next from navegador into @IdPessoa, @Nome
+
+while ( @@fetch_status = 0 )
+begin
+
+	print @Nome
+	
+	update Pessoa set Nome = upper (@Nome)
+		where IdPessoa = @IdPessoa
+	
+	fetch next from navegador into @IdPessoa, @Nome
+	
+end
+
+deallocate navegador
+
+
